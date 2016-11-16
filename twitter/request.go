@@ -1,8 +1,11 @@
 package twitter
 
 import (
+	"encoding/json"
 	"net/url"
 	"strconv"
+
+	"github.com/teitei-tk/tawawa-bot/config"
 )
 
 const (
@@ -12,6 +15,9 @@ const (
 	// from https://twitter.com/Strangestone/status/569617644472573952
 	sinceTweetID             = 569617644472573952
 	defaultFindTimelineCount = 200
+
+	TwitterResponseCacheKey = "Tawawa"
+	ResponseCacheExpiredAt  = 10000
 )
 
 type RequestParametor struct {
@@ -24,7 +30,34 @@ type RequestParametor struct {
 
 // Get Tawawa Owner Timeline it's use Cache
 func GetOwnerTimeline(client Client, param RequestParametor) (res UserTimelineResponse, err error) {
-	return getOwnerTimelineFromTwitter(client, param)
+	res = UserTimelineResponse{}
+
+	redisClient := config.InitRedis()
+	val, err := redisClient.Get(TwitterResponseCacheKey).Result()
+	if val != "" {
+		err = json.Unmarshal([]byte(val), &res)
+		if err != nil {
+			return res, err
+		}
+		return res, err
+	}
+
+	res, err = getOwnerTimelineFromTwitter(client, param)
+	if err != nil {
+		return res, err
+	}
+
+	bytes, err := json.Marshal(res)
+	if err != nil {
+		return res, err
+	}
+
+	err = redisClient.Set(TwitterResponseCacheKey, string(bytes), 0).Err()
+	if err != nil {
+		return res, err
+	}
+
+	return res, err
 }
 
 func getOwnerTimelineFromTwitter(client Client, param RequestParametor) (res UserTimelineResponse, err error) {
