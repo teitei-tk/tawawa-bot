@@ -12,12 +12,12 @@ func main() {
 		panic(err)
 	}
 
-	res, err := twitter.GetOwnerTimeline(client, twitter.RequestParametor{})
+	result, err := twitter.GetAllTawawaTweets(client, twitter.RequestParametor{})
 	if err != nil {
 		panic(err)
 	}
 
-	for _, v := range twitter.FilterTawawaTweets(res).Tweets {
+	for _, v := range result.Tweets {
 		fmt.Println(v.Text)
 		fmt.Println(twitter.FetchHTTPSMediaURL(v))
 		fmt.Println("---------------------")
