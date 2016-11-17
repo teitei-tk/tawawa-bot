@@ -17,7 +17,9 @@ func main() {
 		panic(err)
 	}
 
-	for _, v := range res.Tweets {
+	for _, v := range twitter.FilterTawawaTweets(res).Tweets {
 		fmt.Println(v.Text)
+		fmt.Println(twitter.FetchHTTPSMediaURL(v))
+		fmt.Println("---------------------")
 	}
 }

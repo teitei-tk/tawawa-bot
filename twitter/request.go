@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/teitei-tk/tawawa-bot/config"
 )
@@ -17,7 +18,7 @@ const (
 	defaultFindTimelineCount = 200
 
 	TwitterResponseCacheKey = "Tawawa"
-	ResponseCacheExpiredAt  = 10000
+	ResponseCacheExpiredAt  = 1
 )
 
 type RequestParametor struct {
@@ -52,7 +53,7 @@ func GetOwnerTimeline(client Client, param RequestParametor) (res UserTimelineRe
 		return res, err
 	}
 
-	err = redisClient.Set(TwitterResponseCacheKey, string(bytes), 0).Err()
+	err = redisClient.Set(TwitterResponseCacheKey, string(bytes), time.Duration(time.Millisecond*ResponseCacheExpiredAt)).Err()
 	if err != nil {
 		return res, err
 	}
