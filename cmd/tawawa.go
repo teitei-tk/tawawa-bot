@@ -17,7 +17,7 @@ func main() {
 	}
 
 	http.HandleFunc("/callback", func(w http.ResponseWriter, req *http.Request) {
-		_, err := twitter.GetAllTawawaTweets(client, twitter.RequestParametor{})
+		res, err := twitter.GetAllTawawaTweets(client, twitter.RequestParametor{})
 		if err != nil {
 			panic(err)
 		}
@@ -33,12 +33,12 @@ func main() {
 				continue
 			}
 
-			switch message := event.Message.(type) {
-			case *linebot.TextMessage:
-				if _, err = lineClient.APIClient.ReplyMessage(event.ReplyToken,
-					linebot.NewTextMessage(message.Text)).Do(); err != nil {
-					log.Print(err)
-				}
+			tweet := line.RandResponceChoice(res)
+			content := line.FetchLineImages(tweet)
+
+			msg := linebot.NewImageMessage(content.ContentURL, content.DisplayURL)
+			if _, err = lineClient.APIClient.ReplyMessage(event.ReplyToken, msg).Do(); err != nil {
+				log.Print(err)
 			}
 		}
 
