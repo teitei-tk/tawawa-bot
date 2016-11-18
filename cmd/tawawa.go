@@ -6,8 +6,10 @@ import (
 	"os"
 
 	"github.com/line/line-bot-sdk-go/linebot"
+
 	"github.com/teitei-tk/tawawa-bot/line"
 	"github.com/teitei-tk/tawawa-bot/twitter"
+	"github.com/teitei-tk/tawawa-bot/util"
 )
 
 func main() {
@@ -29,16 +31,30 @@ func main() {
 		}
 
 		for _, event := range events {
+			replySource := util.GetReplySource(event)
+			if event.Type == linebot.EventTypeJoin || event.Type == linebot.EventTypeFollow {
+				textMsg := linebot.NewTextMessage("たわわをおくれ と言ってみましょう。")
+				lineClient.APIClient.PushMessage(replySource, textMsg).Do()
+				return
+			}
+
 			if event.Type != linebot.EventTypeMessage {
 				continue
 			}
 
-			tweet := line.RandResponceChoice(res)
-			content := line.FetchLineImages(tweet)
+			switch message := event.Message.(type) {
+			case *linebot.TextMessage:
+				if message.Text == "たわわをおくれ" {
+					tweet := line.RandResponceChoice(res)
+					mediaURL := twitter.FetchHTTPSMediaURL(tweet)
 
-			msg := linebot.NewImageMessage(content.ContentURL, content.DisplayURL)
-			if _, err = lineClient.APIClient.ReplyMessage(event.ReplyToken, msg).Do(); err != nil {
-				log.Print(err)
+					textMsg := linebot.NewTextMessage(util.ToLowerString(tweet.Text))
+					imageMsg := linebot.NewImageMessage(mediaURL, mediaURL)
+
+					if _, err := lineClient.APIClient.PushMessage(replySource, textMsg, imageMsg).Do(); err != nil {
+						log.Print(err)
+					}
+				}
 			}
 		}
 
